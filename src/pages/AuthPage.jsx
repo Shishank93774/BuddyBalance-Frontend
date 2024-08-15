@@ -1,30 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const AuthPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const initialMode = searchParams.get('mode') || 'login';
-    const [isLogin, setIsLogin] = useState(initialMode == 'login');
+    const [isLogin, setIsLogin] = useState(initialMode === 'login');
     const [formData, setFormData] = useState({
-        name: '',
+        username: '',
+        firstname: '',
+        lastname: '',
         email: '',
         password: '',
         confirmPassword: '',
     });
     const [errors, setErrors] = useState({});
     const [isFormValid, setIsFormValid] = useState(false);
+    const { login } = useAuth();
 
-    const toggleForm = () => {
+    const clearForm = () => {
         setFormData({
-            name: '',
+            username: '',
+            firstname: '',
+            lastname: '',
             email: '',
             password: '',
             confirmPassword: '',
-        })
+        });
         setErrors({});
         setIsFormValid(false);
+    }
+
+    const toggleForm = () => {
+        clearForm();
         if (isLogin) {
             navigate('/auth?mode=signup');
         } else {
@@ -36,9 +48,19 @@ const AuthPage = () => {
         let error;
 
         switch (name) {
-            case 'name':
+            case 'username':
                 if (!value.trim()) {
-                    error = 'Name is required';
+                    error = 'Username is required';
+                }
+                break;
+            case 'firstname':
+                if (!value.trim()) {
+                    error = 'First name is required';
+                }
+                break;
+            case 'lastname':
+                if (!value.trim()) {
+                    error = 'Last name is required';
                 }
                 break;
             case 'email':
@@ -77,12 +99,12 @@ const AuthPage = () => {
     };
 
     useEffect(() => {
-        setIsLogin(initialMode == 'login');
+        setIsLogin(initialMode === 'login');
         const checkFormValidity = () => {
             const hasErrors = Object.values(errors).some((error) => error);
             const allFieldsFilled = isLogin
-                ? formData.email && formData.password
-                : formData.name && formData.email && formData.password && formData.confirmPassword;
+                ? formData.username && formData.password
+                : formData.username && formData.firstname && formData.lastname && formData.email && formData.password && formData.confirmPassword;
 
             setIsFormValid(!hasErrors && allFieldsFilled);
         };
@@ -90,62 +112,127 @@ const AuthPage = () => {
         checkFormValidity();
     }, [errors, formData, initialMode]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Handle form submission logic here (e.g., send data to backend)
-        console.log('Form submitted:', formData);
-        navigate('/');
+        try {
+            let resp;
+
+            if (isLogin) {
+                resp = await axios.post('http://localhost:3000/api/users/login', formData);
+                login(resp.data);
+                setTimeout(() => {
+                    navigate('/');
+                }, 3000);
+                toast.success('Login successful!');
+            } else {
+                resp = await axios.post('http://localhost:3000/api/users/register', formData);
+                toast.success('Signup successful!');
+                clearForm();
+                navigate('/auth?mode=login');
+            }
+        } catch (error) {
+            if (error.response && [400, 401, 404, 409].includes(error.response.status)) {
+                toast.error(error.response.data);
+            } else {
+                toast.error('Network error. Please check your connection.');
+            }
+            console.error('Form submission error:', error);
+        }
     };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 mb-32">
+            <ToastContainer />
             <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
                 <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">
                     {isLogin ? 'Login' : 'Sign Up'}
                 </h2>
 
                 <form onSubmit={handleSubmit}>
-                    {!isLogin && (
-                        <div className="mb-4">
-                            <label className="block text-gray-700">Name</label>
-                            <input
-                                type="text"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Enter your name"
-                            />
-                            {errors.name && (
-                                <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                            )}
-                        </div>
-                    )}
-
-                    <div className="mb-4">
-                        <label className="block text-gray-700">Email</label>
-                        <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter your email"
-                        />
-                        {errors.email && (
-                            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                    {!isLogin ? (
+                        <>
+                            <div className="mb-4 flex space-x-4">
+                                <div className="w-1/2">
+                                    <input
+                                        type="text"
+                                        name="firstname"
+                                        value={formData.firstname}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="First Name"
+                                    />
+                                    {errors.firstname && (
+                                        <p className="text-red-500 text-sm mt-1">{errors.firstname}</p>
+                                    )}
+                                </div>
+                                <div className="w-1/2">
+                                    <input
+                                        type="text"
+                                        name="lastname"
+                                        value={formData.lastname}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Last Name"
+                                    />
+                                    {errors.lastname && (
+                                        <p className="text-red-500 text-sm mt-1">{errors.lastname}</p>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="mb-4 flex space-x-4">
+                                <div className="w-1/2">
+                                    <input
+                                        type="text"
+                                        name="username"
+                                        value={formData.username}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Username"
+                                    />
+                                    {errors.username && (
+                                        <p className="text-red-500 text-sm mt-1">{errors.username}</p>
+                                    )}
+                                </div>
+                                <div className="w-1/2">
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Email"
+                                    />
+                                    {errors.email && (
+                                        <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                                    )}
+                                </div>
+                            </div>
+                        </>
+                    ) :
+                        (
+                            <div className="mb-4">
+                                <input
+                                    type="username"
+                                    name="username"
+                                    value={formData.username}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Username/Email"
+                                />
+                                {errors.username && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.username}</p>
+                                )}
+                            </div>
                         )}
-                    </div>
 
                     <div className="mb-4">
-                        <label className="block text-gray-700">Password</label>
                         <input
                             type="password"
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
                             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter your password"
+                            placeholder="Password"
                         />
                         {errors.password && (
                             <p className="text-red-500 text-sm mt-1">{errors.password}</p>
@@ -154,14 +241,13 @@ const AuthPage = () => {
 
                     {!isLogin && (
                         <div className="mb-4">
-                            <label className="block text-gray-700">Confirm Password</label>
                             <input
                                 type="password"
                                 name="confirmPassword"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Confirm your password"
+                                placeholder="Confirm Password"
                             />
                             {errors.confirmPassword && (
                                 <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>

@@ -1,23 +1,14 @@
 import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
+import reviews from '../data/reviews';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
+import { useAuth } from '../context/AuthContext';
 
 const Homepage = () => {
-
-    const reviews = [
-        { user: "Alex M.", msg: "BuddyBalance has been a game-changer for our group. Managing our loans is now straightforward and hassle-free. Highly recommended!" },
-        { user: "Jamie L.", msg: "The app’s minimal design is perfect for what we need. We can easily track who owes what and settle up without any confusion." },
-        { user: "Morgan T.", msg: "I love how intuitive BuddyBalance is. It’s made keeping track of my personal loans so much easier!" },
-        { user: "Taylor R.", msg: "A fantastic app! It’s so easy to use and really helps to keep everyone in the loop with their loans." },
-        { user: "Jordan W.", msg: "Excellent tool for managing group finances. The interface is clean and user-friendly, making loan tracking a breeze." },
-        { user: "Casey H.", msg: "BuddyBalance has simplified our group expenses so much. We no longer have to worry about who owes what. It’s a must-have!" },
-        { user: "Sydney K.", msg: "The best part about BuddyBalance is how it cuts down on unnecessary transactions. It’s efficient and super easy to use." },
-        { user: "Robin P.", msg: "Great app for managing group loans! The design is sleek, and it makes everything so much more transparent and manageable." }
-    ];
-
+    const { user } = useAuth();
 
     return (
         <div className="flex flex-col bg-gray-100 mb-32">
@@ -31,18 +22,26 @@ const Homepage = () => {
                         Your friendly loan tracker made simple and intuitive.
                     </p>
                     <div className="flex justify-center space-x-4">
-                        <Link
-                            to="/auth?mode=login"
-                            className="bg-blue-500 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-600 transition duration-300"
-                        >
-                            Login
-                        </Link>
-                        <Link
-                            to="/auth?mode=signup"
-                            className="bg-green-500 text-white px-6 py-3 rounded-lg shadow hover:bg-green-600 transition duration-300"
-                        >
-                            Sign Up
-                        </Link>
+                        {!user ? (
+                            <>
+                                <Link
+                                    to="/auth?mode=login"
+                                    className="bg-blue-500 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-600 transition duration-300"
+                                >
+                                    Login
+                                </Link>
+                                <Link
+                                    to="/auth?mode=signup"
+                                    className="bg-green-500 text-white px-6 py-3 rounded-lg shadow hover:bg-green-600 transition duration-300"
+                                >
+                                    Sign Up
+                                </Link>
+                            </>
+                        ) : (
+                            <p className="text-lg text-gray-600 mb-8">
+                                Welcome back, <span className="font-medium text-nowrap">{user.username}!</span>
+                            </p>
+                        )}
                     </div>
                 </div>
             </section>

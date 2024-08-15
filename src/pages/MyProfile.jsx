@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const MyProfile = () => {
     const navigate = useNavigate();
     const [isEditMode, setIsEditMode] = useState(false);
     const [profileData, setProfileData] = useState({
         username: 'john_doe',
-        firstName: 'John',
-        lastName: 'Doe',
+        firstname: 'John',
+        lastname: 'Doe',
         email: 'john.doe@example.com',
         phone: '',
         address: '',
@@ -16,7 +18,7 @@ const MyProfile = () => {
         confirmNewPassword: '',
     });
     const [errors, setErrors] = useState({});
-
+    const { user, update } = useAuth();
     const validateField = (name, value) => {
         let error = '';
 
@@ -26,12 +28,12 @@ const MyProfile = () => {
                     error = 'Username is required';
                 }
                 break;
-            case 'firstName':
+            case 'firstname':
                 if (!value.trim()) {
                     error = 'First Name is required';
                 }
                 break;
-            case 'lastName':
+            case 'lastname':
                 if (!value.trim()) {
                     error = 'Last Name is required';
                 }
@@ -61,7 +63,7 @@ const MyProfile = () => {
                 break;
         }
         const newErrors = errors;
-        if (profileData.newPassword || profileData.confirmNewPassword && !profileData.oldPassword) {
+        if ((profileData.newPassword || profileData.confirmNewPassword) && !profileData.oldPassword) {
             newErrors['oldPassword'] = "First please confirm password";
         }
         if (name === 'newPassword') {
@@ -83,7 +85,7 @@ const MyProfile = () => {
         setIsEditMode(!isEditMode);
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
         const isValid = Object.keys(profileData).every((key) =>
             validateField(key, profileData[key])
@@ -91,11 +93,19 @@ const MyProfile = () => {
 
         if (isValid) {
             // Perform save operation (e.g., API call to update user data)
-            console.log('Profile updated:', profileData);
+            const formData = { ...profileData, id: user.id }
+            const resp = await axios.patch("http://localhost:3000/api/users/update", formData);
+            update(resp.data);
+            console.log('Profile updated');
             setIsEditMode(false);
             navigate('/');
         }
     };
+
+    useEffect(() => {
+        // console.log(user);
+        setProfileData({ profileData, ...user });
+    }, [user]);
 
     return (
         <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-lg mt-10 mb-32">
@@ -107,7 +117,7 @@ const MyProfile = () => {
                 />
             </div>
             <div className="text-center">
-                <h2 className="text-2xl font-bold mb-2">{profileData.firstName} {profileData.lastName}</h2>
+                <h2 className="text-2xl font-bold mb-2">{profileData.firstname} {profileData.lastname}</h2>
                 <p className="text-gray-600 mb-4">{profileData.email}</p>
             </div>
             <button
@@ -140,14 +150,14 @@ const MyProfile = () => {
                             <label className="block text-gray-700 font-bold mb-2">First Name</label>
                             <input
                                 type="text"
-                                name="firstName"
-                                value={profileData.firstName}
+                                name="firstname"
+                                value={profileData.firstname}
                                 onChange={handleInputChange}
-                                className={`w-full p-2 border ${errors.firstName ? 'border-red-500' : 'border-gray-300'
+                                className={`w-full p-2 border ${errors.firstname ? 'border-red-500' : 'border-gray-300'
                                     } rounded`}
                                 required
                             />
-                            {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
+                            {errors.firstname && <p className="text-red-500 text-sm mt-1">{errors.firstname}</p>}
                         </div>
 
                         {/* Last Name Field */}
@@ -155,14 +165,14 @@ const MyProfile = () => {
                             <label className="block text-gray-700 font-bold mb-2">Last Name</label>
                             <input
                                 type="text"
-                                name="lastName"
-                                value={profileData.lastName}
+                                name="lastname"
+                                value={profileData.lastname}
                                 onChange={handleInputChange}
-                                className={`w-full p-2 border ${errors.lastName ? 'border-red-500' : 'border-gray-300'
+                                className={`w-full p-2 border ${errors.lastname ? 'border-red-500' : 'border-gray-300'
                                     } rounded`}
                                 required
                             />
-                            {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
+                            {errors.lastname && <p className="text-red-500 text-sm mt-1">{errors.lastname}</p>}
                         </div>
 
                         {/* Phone Field */}
