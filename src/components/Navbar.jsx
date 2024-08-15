@@ -1,56 +1,51 @@
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { ChevronDownIcon } from '@heroicons/react/20/solid'
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
   return (
-    <>
-      <div className="border-black border-2 min-h-16 ml-auto mr-auto flex flex-row justify-between items-center">
-        <span className="border-black border-2 ml-32">Wise Transact</span>
-        <div className="border-black border-2h-auto w-auto mr-20 flex flex-row items-center">
-          <Menu as="div" className="relative inline-block text-left">
-            <div>
-              <MenuButton className=" inline-flex w-full justify-center gap-x-1.5 rounded-md bg-red px-3 py-2 text-sm font-semibold text-gray-900 overflow-hidden">
-                <img src="assets/user.png" alt="user image" className="w-10 h-10 border-slate-800 border-1"></img>
-                <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5 text-black" />
-              </MenuButton>
-            </div>
-
-            <MenuItems
-              transition
-              className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
-            >
-              <div className="py-1">
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-gray-900"
-                  >
-                    My Profile
-                  </a>
-                </MenuItem>
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-gray-900"
-                  >
-                    My Groups
-                  </a>
-                </MenuItem>
-                <MenuItem>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-gray-900"
-                  >
-                    Logout
-                  </a>
-                </MenuItem>
-              </div>
-            </MenuItems>
-          </Menu>
-        </div>
+    <nav className="bg-white shadow-md py-4 px-6 flex justify-between items-center sticky top-0 left-0 w-full">
+      {/* App Name / Logo */}
+      <div className="text-2xl font-bold text-gray-800 cursor-pointer" onClick={(e) => {
+        e.preventDefault();
+        navigate("/");
+      }}>
+        BuddyBalance
       </div>
-    </>
-  )
-}
 
-export default Navbar
+      {/* Profile Icon and Dropdown */}
+      <div className="relative">
+        <button
+          className="flex items-center focus:outline-none"
+          onClick={toggleDropdown}
+        >
+          <img
+            src="/assets/user.png" // Placeholder image
+            alt="Profile"
+            className="w-8 h-8 rounded-full"
+          />
+        </button>
+
+        {/* Dropdown Menu */}
+        {isDropdownOpen && (
+          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+            <Link to="/auth?mode=login" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+              Login
+            </Link>
+            <Link to="/auth?mode=signup" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+              SignUp
+            </Link>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
