@@ -20,7 +20,7 @@ const Homepage = () => {
 
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100">
+        <div className="flex flex-col bg-gray-100 mb-32">
             {/* Hero Section */}
             <section className="flex-1 bg-white text-center py-12 px-6">
                 <div className="container mx-auto">

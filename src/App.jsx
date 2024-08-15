@@ -1,7 +1,5 @@
-import Footer from "./components/Footer"
-import Navbar from "./components/navbar"
-import HomePage from "./pages/HomePage"
-import AuthPage from "./pages/AuthPage"
+import { Navbar, Footer } from './components';
+import { HomePage, AuthPage, MyProfile } from './pages';
 import { Routes, Route } from "react-router";
 
 function App() {
@@ -9,24 +7,36 @@ function App() {
     <>
       <Routes>
         <Route
-          path="/"
+          path="/auth"
           element={
             <>
               <Navbar></Navbar>
-              <div className="w-4/5 mx-auto">
-                <HomePage></HomePage>
+              <div className="w-4/5 mx-auto min-h-screen">
+                <AuthPage></AuthPage>
               </div>
               <Footer></Footer>
             </>
           }
         ></Route>
         <Route
-          path="/auth"
+          path="/myProfile"
           element={
             <>
               <Navbar></Navbar>
-              <div className="w-4/5 mx-auto">
-                <AuthPage></AuthPage>
+              <div className="w-4/5 mx-auto min-h-screen">
+                <MyProfile></MyProfile>
+              </div>
+              <Footer></Footer>
+            </>
+          }
+        ></Route>
+        <Route
+          path="/"
+          element={
+            <>
+              <Navbar></Navbar>
+              <div className="w-4/5 mx-auto min-h-screen">
+                <HomePage></HomePage>
               </div>
               <Footer></Footer>
             </>

@@ -17,8 +17,19 @@ const AuthPage = () => {
     const [isFormValid, setIsFormValid] = useState(false);
 
     const toggleForm = () => {
-        setIsLogin(!isLogin);
+        setFormData({
+            name: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+        })
         setErrors({});
+        setIsFormValid(false);
+        if (isLogin) {
+            navigate('/auth?mode=signup');
+        } else {
+            navigate('/auth?mode=login');
+        }
     };
 
     const validateField = (name, value) => {
@@ -87,7 +98,7 @@ const AuthPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 mb-32">
             <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
                 <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">
                     {isLogin ? 'Login' : 'Sign Up'}
@@ -160,7 +171,7 @@ const AuthPage = () => {
 
                     <button
                         type="submit"
-                        className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:bg-blue-400 transition duration-300"
+                        className="w-full bg-blue-500 text-white py-2 rounded-lg transition duration-300"
                         disabled={!isFormValid}
                     >
                         {isLogin ? 'Login' : 'Sign Up'}
