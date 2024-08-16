@@ -93,8 +93,7 @@ const MyProfile = () => {
 
         if (isValid) {
             // Perform save operation (e.g., API call to update user data)
-            const formData = { ...profileData, id: user.id }
-            const resp = await axios.patch(`${BASE_URL}/users/update`, formData);
+            const resp = await axios.patch(`${BASE_URL}/users/${user.id}/update`, profileData);
             update(resp.data);
             console.log('Profile updated');
             setIsEditMode(false);

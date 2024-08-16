@@ -1,5 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const MyGroups = () => {
@@ -48,8 +49,6 @@ const MyGroups = () => {
                         return { ...group, members };
                     })
                 );
-
-                console.log(newGroups);
                 setGroups(newGroups);
             } catch (error) {
                 console.error("Error fetching groups:", error);
@@ -79,7 +78,9 @@ const MyGroups = () => {
                             )}
                         </div>
                         <button className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">
-                            View Details
+                            <Link to={`/groups/${group?.id}`}>
+                                View Details
+                            </Link>
                         </button>
                     </div>
                 ))}

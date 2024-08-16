@@ -7,7 +7,7 @@ const Group = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [group, setGroup] = useState([]);
-    const { BASE_URL } = useAuth();
+    const { user, BASE_URL } = useAuth();
 
     const [isEditing, setIsEditing] = useState(false);
     const [newName, setNewName] = useState(group.name);
@@ -17,9 +17,9 @@ const Group = () => {
         setIsEditing(true);
     };
 
-    const handleSaveClick = (e) => {
+    const handleSaveClick = async (e) => {
         e.preventDefault();
-        // editGroupName(id, newName);
+        axios.patch(`${BASE_URL}/groups/${id}/update`, { ...group, groupName: newName });  // can happen in bg np.
         setIsEditing(false);
     };
 
@@ -88,15 +88,17 @@ const Group = () => {
                     {group?.members?.map(member => (
                         <li key={member.id} className="flex justify-between items-center mb-2">
                             <span>{member.username}</span>
-                            <button
-                                className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700"
-                                onClick={() => console.log(`Delete ${member.username}`)}
-                            >
-                                Delete
-                            </button>
                         </li>
                     ))}
                 </ul>
+                <div className="flex flex-row-reverse">
+                    <button
+                        className="bg-black text-white px-2 py-1 rounded ml-auto justify-end"
+                        onClick={() => console.log(`Delete ${user.username}`)}
+                    >
+                        Leave Group
+                    </button>
+                </div>
             </div>
 
             <div className="mt-6">
