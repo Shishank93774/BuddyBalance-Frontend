@@ -8,6 +8,7 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const BASE_URL = 'http://localhost:3000/api';
 
     const update = (userData) => {
         setUser(userData);
@@ -33,7 +34,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, update, login, logout }}>
+        <AuthContext.Provider value={{ BASE_URL, user, update, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

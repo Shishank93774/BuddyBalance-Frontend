@@ -18,7 +18,7 @@ const MyProfile = () => {
         confirmNewPassword: '',
     });
     const [errors, setErrors] = useState({});
-    const { user, update } = useAuth();
+    const { user, update, BASE_URL } = useAuth();
     const validateField = (name, value) => {
         let error = '';
 
@@ -94,7 +94,7 @@ const MyProfile = () => {
         if (isValid) {
             // Perform save operation (e.g., API call to update user data)
             const formData = { ...profileData, id: user.id }
-            const resp = await axios.patch("http://localhost:3000/api/users/update", formData);
+            const resp = await axios.patch(`${BASE_URL}/users/update`, formData);
             update(resp.data);
             console.log('Profile updated');
             setIsEditMode(false);

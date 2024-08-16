@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import groups from '../data/groups';
+import { useAuth } from '../context/AuthContext';
 
-const Group = ({ editGroupName, addUserToGroup }) => {
+const Group = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-
-    const group = groups.find(g => g.id == id);
-    console.log(id);
-    console.log(groups);
+    const [group, setGroup] = useState([]);
+    const { BASE_URL } = useAuth();
 
     const [isEditing, setIsEditing] = useState(false);
     const [newName, setNewName] = useState(group.name);
@@ -27,7 +26,7 @@ const Group = ({ editGroupName, addUserToGroup }) => {
     const handleAddMember = () => {
         if (newMemberEmail) {
             // addUserToGroup(id, newMemberEmail);
-            
+
             setNewMemberEmail('');
         }
     };
@@ -35,6 +34,23 @@ const Group = ({ editGroupName, addUserToGroup }) => {
     const handleShowTransactions = () => {
         navigate(`/groups/${id}/transactions`);
     };
+
+    useEffect(() => {
+        const getGroup = async () => {
+            const resp = await axios.get(`${BASE_URL}/groups/${id}`);
+            const newGroup = resp.data;
+            const members = await Promise.all(
+                newGroup.groupMembers.map(async (memberId) => {
+                    const { data } = await axios.get(`${BASE_URL}/users/${memberId}`);
+                    return data;
+                })
+            );
+            const grp = { ...newGroup, members };
+            setNewName(grp.groupName);
+            setGroup(grp);
+        }
+        getGroup();
+    }, [BASE_URL]);
 
     return (
         <div className="container mx-auto p-6 bg-white rounded-lg shadow-lg">
@@ -69,12 +85,12 @@ const Group = ({ editGroupName, addUserToGroup }) => {
             <div className="mt-6">
                 <h3 className="text-xl font-bold mb-4">Members</h3>
                 <ul>
-                    {group.members.map(member => (
+                    {group?.members?.map(member => (
                         <li key={member.id} className="flex justify-between items-center mb-2">
-                            <span>{member}</span>
+                            <span>{member.username}</span>
                             <button
                                 className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700"
-                                onClick={() => console.log(`Delete ${member}`)}
+                                onClick={() => console.log(`Delete ${member.username}`)}
                             >
                                 Delete
                             </button>

@@ -20,7 +20,7 @@ const AuthPage = () => {
     });
     const [errors, setErrors] = useState({});
     const [isFormValid, setIsFormValid] = useState(false);
-    const { login } = useAuth();
+    const { login, BASE_URL } = useAuth();
 
     const clearForm = () => {
         setFormData({
@@ -116,16 +116,17 @@ const AuthPage = () => {
         e.preventDefault();
         try {
             let resp;
-
             if (isLogin) {
-                resp = await axios.post('http://localhost:3000/api/users/login', formData);
+                setFormData({ ...formData, email: formData.username });
+                resp = await axios.post(`${BASE_URL}/users/login`, formData);
+                console.log(resp.data);
                 login(resp.data);
                 setTimeout(() => {
                     navigate('/');
                 }, 3000);
                 toast.success('Login successful!');
             } else {
-                resp = await axios.post('http://localhost:3000/api/users/register', formData);
+                resp = await axios.post(`{BASE_URL}/users/register`, formData);
                 toast.success('Signup successful!');
                 clearForm();
                 navigate('/auth?mode=login');
