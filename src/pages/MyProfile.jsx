@@ -7,10 +7,10 @@ const MyProfile = () => {
     const navigate = useNavigate();
     const [isEditMode, setIsEditMode] = useState(false);
     const [profileData, setProfileData] = useState({
-        username: 'john_doe',
-        firstname: 'John',
-        lastname: 'Doe',
-        email: 'john.doe@example.com',
+        username: '',
+        firstname: '',
+        lastname: '',
+        email: '',
         phone: '',
         address: '',
         oldPassword: '',
@@ -19,6 +19,9 @@ const MyProfile = () => {
     });
     const [errors, setErrors] = useState({});
     const { user, update, BASE_URL } = useAuth();
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState('');
+
     const validateField = (name, value) => {
         let error = '';
 
@@ -62,48 +65,65 @@ const MyProfile = () => {
             default:
                 break;
         }
-        const newErrors = errors;
+
         if ((profileData.newPassword || profileData.confirmNewPassword) && !profileData.oldPassword) {
-            newErrors['oldPassword'] = "First please confirm password";
+            setErrors((prevErrors) => ({ ...prevErrors, oldPassword: "Please confirm your current password." }));
         }
-        if (name === 'newPassword') {
-            newErrors['confirmNewPassword'] = error;
-        } else {
-            newErrors[name] = error;
-        }
-        setErrors(newErrors);
+
+        setErrors((prevErrors) => ({
+            ...prevErrors,
+            [name]: error,
+            ...(name === 'newPassword' ? { confirmNewPassword: errors.confirmNewPassword } : {}),
+        }));
+
         return error === '';
     };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setProfileData({ ...profileData, [name]: value });
+        setProfileData((prevData) => ({ ...prevData, [name]: value }));
         validateField(name, value);
     };
 
     const toggleEditMode = () => {
-        setIsEditMode(!isEditMode);
+        setIsEditMode((prevMode) => !prevMode);
+        if (!isEditMode) {
+            setErrors({});
+        }
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
+        setSaveError('');
+        setSaving(true);
+
         const isValid = Object.keys(profileData).every((key) =>
             validateField(key, profileData[key])
         );
 
         if (isValid) {
-            // Perform save operation (e.g., API call to update user data)
-            const resp = await axios.patch(`${BASE_URL}/users/${user.id}/update`, profileData);
-            update(resp.data);
-            console.log('Profile updated');
-            setIsEditMode(false);
-            navigate('/');
+            try {
+                const resp = await axios.patch(`${BASE_URL}/users/${user.id}/update`, profileData);
+                update(resp.data);
+                console.log('Profile updated');
+                setIsEditMode(false);
+                navigate('/');
+            } catch (error) {
+                console.error('Failed to update profile:', error);
+                setSaveError('Failed to save changes. Please try again.');
+            } finally {
+                setSaving(false);
+            }
+        } else {
+            setSaving(false);
+            setSaveError('Please correct the highlighted errors.');
         }
     };
 
     useEffect(() => {
-        // console.log(user);
-        setProfileData({ profileData, ...user });
+        if (user) {
+            setProfileData((prevData) => ({ ...prevData, ...user }));
+        }
     }, [user]);
 
     return (
@@ -205,7 +225,8 @@ const MyProfile = () => {
                                 name="oldPassword"
                                 value={profileData.oldPassword}
                                 onChange={handleInputChange}
-                                className="w-full p-2 border ${errors.oldPassword ? 'border-red-500' : 'border-gray-300"
+                                className={`w-full p-2 border ${errors.oldPassword ? 'border-red-500' : 'border-gray-300'
+                                    } rounded`}
                             />
                             {errors.oldPassword && (
                                 <p className="text-red-500 text-sm mt-1">{errors.oldPassword}</p>
@@ -220,11 +241,12 @@ const MyProfile = () => {
                                 name="newPassword"
                                 value={profileData.newPassword}
                                 onChange={handleInputChange}
-                                className="w-full p-2 border ${errors.newPassword ? 'border-red-500' : 'border-gray-300"
+                                className={`w-full p-2 border ${errors.newPassword ? 'border-red-500' : 'border-gray-300'
+                                    } rounded`}
                             />
                             {errors.newPassword && (
-                                <p className="text-red-500 text-sm mt-1">{errors.newPassword}</p>
-                            )}
+                                <p className="text-red-500 text-sm mt-1">{errors.newPassword}</p>)
+                            }
                         </div>
 
                         {/* Confirm New Password Field */}
@@ -239,17 +261,22 @@ const MyProfile = () => {
                                     } rounded`}
                             />
                             {errors.confirmNewPassword && (
-                                <p className="text-red-500 text-sm mt-1">{errors.confirmNewPassword}</p>
-                            )}
+                                <p className="text-red-500 text-sm mt-1">{errors.confirmNewPassword}</p>)}
                         </div>
                     </div>
+
+                    {/* Save Button */}
                     <button
                         type="submit"
-                        className="bg-green-500 text-white px-4 py-2 rounded-md"
-                        disabled={Object.values(errors).some((error) => error !== '')}
+                        className={`bg-blue-500 text-white px-4 py-2 rounded-md ${saving ? 'opacity-50' : ''
+                            }`}
+                        disabled={saving}
                     >
-                        Save Changes
+                        {saving ? 'Saving...' : 'Save Changes'}
                     </button>
+                    {saveError && (
+                        <p className="text-red-500 text-sm mt-4">{saveError}</p>
+                    )}
                 </form>
             )}
         </div>
