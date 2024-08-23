@@ -31,6 +31,13 @@ const Group = () => {
         }
     };
 
+    const handleLeave = async (e) => {
+        e.preventDefault();
+        console.log("Delete");
+        const resp = await axios.patch(`${BASE_URL}/groups/${group.id}/remove`, { memberId: user.id });
+        console.log(resp.data);
+    }
+
     const handleShowTransactions = () => {
         navigate(`/groups/${id}/transactions`);
     };
@@ -94,7 +101,7 @@ const Group = () => {
                 <div className="flex flex-row-reverse">
                     <button
                         className="bg-black text-white px-2 py-1 rounded ml-auto justify-end"
-                        onClick={() => console.log(`Delete ${user.username}`)}
+                        onClick={handleLeave}
                     >
                         Leave Group
                     </button>

@@ -1,42 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import groups from '../data/groups';
+import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
 const Transactions = () => {
     const { id } = useParams();
     const [showSummary, setShowSummary] = useState(false);
+    const [summary, setSummary] = useState({});
     const [showForm, setShowForm] = useState(false);
     const [selectedUser, setSelectedUser] = useState('');
+    const [transactions, setTransactions] = useState([]);
     const [amount, setAmount] = useState('');
     const [errors, setErrors] = useState({});
+    const { BASE_URL } = useAuth();
 
-    const user1 = "Emily"; // Assume user1 is "Emily"
+    // Memoized cache object to store usernames
+    const userCache = useMemo(() => ({}), []);
 
-    // Find the group by ID
-    const group = groups.find(group => group.id === parseInt(id));
-
-    if (!group) {
-        return <div className="container mx-auto px-4 py-8">Group not found.</div>;
-    }
-
-    // Generate a list of users in the group excluding the current user
-    const groupMembers = group.members.filter(member => member !== user1);
-
-    const generateSummary = () => {
-        const summary = {};
-
-        group.transactions.forEach(({ from, to, amount }) => {
-            if (!summary[from]) summary[from] = { owes: 0, gets: 0 };
-            if (!summary[to]) summary[to] = { owes: 0, gets: 0 };
-
-            summary[from].owes += amount;
-            summary[to].gets += amount;
-        });
-
-        return summary;
+    // Function to fetch user details
+    const fetchUserDetails = async (userId) => {
+        const resp = await axios.get(`${BASE_URL}/users/${userId}`);
+        return resp.data.username; // Assuming the API response includes a 'username' field
     };
 
-    const summary = generateSummary();
+    // Function to get the username, either from cache or API
+    const getUsername = async (userId) => {
+        if (userCache[userId]) {
+            return userCache[userId];
+        } else {
+            const username = await fetchUserDetails(userId);
+            userCache[userId] = username;
+            return username;
+        }
+    };
 
     // Function to handle form submission
     const handleSubmit = (e) => {
@@ -52,25 +48,46 @@ const Transactions = () => {
 
         if (Object.keys(newErrors).length === 0) {
             // Process the entry, e.g., update the state or send to the server
-            console.log(`User1 (${user1}) gave ${amount} to ${selectedUser}`);
+            console.log(`User1 (${selectedUser}) gave ${amount}`);
             setShowForm(false); // Close the form
         } else {
             setErrors(newErrors);
         }
     };
 
+    // Fetch and cache usernames and transactions on mount
+    useEffect(() => {
+        const fetchData = async () => {
+            // Fetch group members and cache their usernames
+            const resp = await axios.get(`${BASE_URL}/groups/${id}`);
+            const mems = resp.data.groupMembers;
+            await Promise.all(mems.map(async (memberId) => {
+                const username = await getUsername(memberId);
+                userCache[memberId] = username;
+            }));
+
+            // Fetch transactions
+            const transResp = await axios.get(`${BASE_URL}/groups/${id}/transactions`);
+            setTransactions(transResp.data);
+
+            // Fetch summary
+            const summaryResp = await axios.get(`${BASE_URL}/groups/${id}/summarize`);
+            setSummary(summaryResp.data);
+        };
+
+        fetchData();
+    }, [BASE_URL, id, userCache]);
+
     return (
         <div className="container mx-auto px-4 py-8 relative">
-            <h1 className="text-3xl font-bold mb-8">{group.name}</h1>
-
             {/* Transactions Section */}
             <div className="bg-white p-6 rounded-lg shadow-md">
                 <h2 className="text-2xl font-semibold mb-4">Transactions</h2>
                 <ul className="space-y-4">
-                    {group.transactions.map((transaction, index) => (
+                    {transactions.map((transaction, index) => (
                         <li key={index} className="flex justify-between items-center p-4 bg-gray-100 rounded">
-                            <span>{transaction.from} → {transaction.to}</span>
-                            <span>${transaction.amount} for {transaction.description}</span>
+                            <span>{userCache[transaction.from]} → {userCache[transaction.to]}</span>
+                            <span>${transaction.amount} for {transaction.for}</span>
                         </li>
                     ))}
                 </ul>
@@ -101,12 +118,17 @@ const Transactions = () => {
                 <div className="mt-8">
                     <h2 className="text-2xl font-semibold mb-4">Summary</h2>
                     <ul className="space-y-4">
-                        {Object.entries(summary).map(([person, { owes, gets }], index) => (
-                            <li key={index} className="flex justify-between items-center p-4 bg-gray-100 rounded">
-                                <span>{person}</span>
-                                <span>
-                                    Owes: ${owes} | Gets: ${gets}
-                                </span>
+                        {Object.entries(summary).map(([personId, debts], index) => (
+                            <li key={index} className="flex flex-col p-4 bg-gray-100 rounded">
+                                <span>{userCache[personId]}</span>
+                                <ul className="mt-2 space-y-2">
+                                    {debts.map((debt, debtIndex) => (
+                                        <li key={debtIndex} className="flex justify-between">
+                                            <span>Owes to: {userCache[debt.to]}</span>
+                                            <span>Amount: ${debt.amount}</span>
+                                        </li>
+                                    ))}
+                                </ul>
                             </li>
                         ))}
                     </ul>
@@ -119,7 +141,6 @@ const Transactions = () => {
                     <div className="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-lg relative">
                         <h2 className="text-2xl font-semibold mb-4">New Entry</h2>
                         <form onSubmit={handleSubmit}>
-
                             {/* To (Search Dropdown) */}
                             <div className="mb-4">
                                 <label htmlFor="to" className="block text-gray-700">To:</label>
@@ -133,8 +154,8 @@ const Transactions = () => {
                                     placeholder="Search for a user"
                                 />
                                 <datalist id="userList">
-                                    {groupMembers.map((member, index) => (
-                                        <option key={index} value={member} />
+                                    {Object.keys(userCache).map((userId, index) => (
+                                        <option key={index} value={userCache[userId]} />
                                     ))}
                                 </datalist>
                                 {errors.selectedUser && <p className="text-red-500 text-sm">{errors.selectedUser}</p>}
